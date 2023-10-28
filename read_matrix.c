@@ -1,8 +1,8 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <math.h>
-#include "mmlib.h"
 
 #define dim_cart_comm 2
 #define tag 0
@@ -53,35 +53,6 @@ void read_matrix(int dim, int* Matrix[]) {
     }
 }
 
-int malloc2dfloat(float ***array, int n, int m) {
-
-    /* allocate the n*m contiguous items */
-    float *p = (float *)malloc(n*m*sizeof(float));
-    if (!p) return -1;
-
-    /* allocate the row pointers into the memory */
-    (*array) = (float **)malloc(n*sizeof(float*));
-    if (!(*array)) {
-       free(p);
-       return -1;
-    }
-
-    /* set up the pointers into the contiguous memory */
-    for (int i=0; i<n; i++) 
-       (*array)[i] = &(p[i*m]);
-
-    return 0;
-}
-
-int free2dfloat(float ***array) {
-    /* free the memory - the first element of the array is at the start */
-    free(&((*array)[0][0]));
-
-    /* free the pointers into the memory */
-    free(*array);
-
-    return 0;
-}
 
 int main(int argc, char **argv) {
     // Create an int and a char variable
@@ -148,7 +119,7 @@ int main(int argc, char **argv) {
     
     // Initializing each blocks sub matrixes (A, B, Result and a temporary one)
     for (int i=0; i<4; i++)
-        M[i] = (int *)malloc(blocksize * sizeof(int));
+        M[i] = (int *)calloc(sizeof(int), blocksize * blocksize);
     
     if (!(M[0] && M[1] && M[2] && M[3])) {
         fprintf(stderr,  "Out of memory!\n");
@@ -215,14 +186,25 @@ int fox_alg(int rank, int numblocks, int blocksize, int* M[], int matrixDim, int
 
     if (VERBOSE) {fprintf(stderr, "   <fox_alg> Process %d - Initial grid coords (%d,%d) | Rank %d\n", rank, myRow, myCol, gridRank);}
     
-    // for(i = 0; i < blocksize; i++) {
-    //     get_block_row(**M0, matrixDim, myRow, myCol, i, blocksize, &(M[0][i*blocksize]));
-    //     get_block_row(**M1, matrixDim, myRow, myCol, i, blocksize, &(M[1][i*blocksize]));
-    // }
-    // if (VERBOSE) {
-    //     fprintf(stderr, "   <fox_alg> Process %d - Matrix M[0] 1st step: ", rank);
-    //     print_matrix(&M[0], blocksize);
-    // }
+    for(i = 0; i < blocksize; i++) {
+        // get_block_row(**M0, matrixDim, myRow, myCol, i, blocksize, &(M[0][i*blocksize]));
+        for (j=0; j<blocksize; j++) {
+            M[0][i*blocksize + j] = M0[myRow*blocksize + i][myCol*blocksize + j];
+        }
+        // get_block_row(**M0, matrixDim, myRow, myCol, i, blocksize, &(M[0][i*blocksize]));
+        for (j=0; j<blocksize; j++) {
+            M[1][i*blocksize + j] = M1[myRow*blocksize + i][myCol*blocksize + j];
+        }
+    }
+    if (VERBOSE) {
+        fprintf(stderr, "   <fox_alg> Process %d - Matrix[0] first step:\n", rank);
+        for (int i=0; i<blocksize; i++) {
+            for (int j=0; j<blocksize; j++) {
+                fprintf(stderr, "       <fox_alg> Process %d - M[0][%d, %d] = %d ", rank, i, j, M[0][i*blocksize + j]);
+            }
+            fprintf(stderr, "\n");
+        }
+    }
 
     return 0;
 }
