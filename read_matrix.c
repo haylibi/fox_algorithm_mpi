@@ -6,27 +6,19 @@
 
 #define dim_cart_comm 2
 #define tag 0
-#define VERBOSE 1
+#define VERBOSE 0
 int matrixDim, **Matrix;
-int* contiguousMatrix;
 
-int fox_alg(int, int, int, int**, int, int**, int**, int**);
+int fox_alg(int, int, int, int**, int, int**, int**, int*);
 
-
-// Matrix multiplication function
-void mat_(int r, int c, int dim, int* m1, int* m2, int* mr) {
-    for(int i = 0; i < r; i++) {
-        for(int j = 0; j < c; j++) {
-            mr[i*dim + j] = m1[i*dim + j] + m2[i*dim + j];
-        }
-    }
+void block_mult(int* c, int* a, int* b, int blk){
+  int i,j,k;
+  
+  for (i = 0; i < blk; i++)
+    for (j = 0; j < blk; j ++)
+      for (k = 0; k < blk; k++)
+        c[i*blk+j] += (a[i*blk+k] * b[k*blk+j]);
 }
-void mat(int dim, int* m1, int* m2, int* mr) {
-    for (int i=0; i<dim; i++) 
-        for (int j=0; j<dim; j++) 
-            mat_(i, j, dim, m1, m2, mr);    
-}
-
 
 void print_matrix(int* Matrix[], int dim) {
     for (int i=0; i<dim; i++) {
@@ -107,10 +99,11 @@ int main(int argc, char **argv) {
 
 
     // Allocating memory for final result matrix
-    int *MatrixResult[matrixDim];  // A_ij = M[0]  B_hk = M[1] Cxy = M[2]  TMP  = M[3]     (These are all blocks [sub matrixes]) 
-    for (int i=0; i<matrixDim; i++) {
-        MatrixResult[i] = (int *)malloc(matrixDim * sizeof(int));
-    }
+    // int *MatrixResult[matrixDim];  // A_ij = M[0]  B_hk = M[1] Cxy = M[2]  TMP  = M[3]     (These are all blocks [sub matrixes]) 
+    // for (int i=0; i<matrixDim; i++) {
+    //     MatrixResult[i] = (int *)malloc(matrixDim * sizeof(int));
+    // }
+    int* MatrixResult = (int *)malloc(matrixDim*matrixDim * sizeof(int));
 
     // Calculations for array sizes
     numblocks = sqrt(numprocs);         // Find how many blocks we'll have (num_process = numblocks*numblocks)
@@ -118,9 +111,9 @@ int main(int argc, char **argv) {
 
     
     // Initializing each blocks sub matrixes (A, B, Result and a temporary one)
-    for (int i=0; i<4; i++)
+    for (int i=0; i<4; i++) {
         M[i] = (int *)calloc(sizeof(int), blocksize * blocksize);
-    
+    }
     if (!(M[0] && M[1] && M[2] && M[3])) {
         fprintf(stderr,  "Out of memory!\n");
         for(int i = 0; i < 4; i++) 
@@ -128,15 +121,36 @@ int main(int argc, char **argv) {
         goto exit;
     }
 
-
-    if (VERBOSE) {fprintf(stderr, "Process %d: Starting Fox_alg\n", rank);}
-    fox_alg(rank, numblocks, blocksize, M, matrixDim, Matrix, Matrix, MatrixResult); 
-    if (VERBOSE) {fprintf(stderr, "Process %d: Finished Fox_alg\n", rank);}
+    for (int n=0; n<2; n++) {
+        if (VERBOSE) {fprintf(stderr, "Process %d: Starting Fox_alg\n", rank);}
+        fox_alg(rank, numblocks, blocksize, M, matrixDim, Matrix, Matrix, MatrixResult); 
+        if (VERBOSE) {fprintf(stderr, "Process %d: Finished Fox_alg\n", rank);}
+        MPI_Bcast(MatrixResult, matrixDim*matrixDim, MPI_INT, 0, MPI_COMM_WORLD);
+        
+        
+        for (int i=0; i<matrixDim; i++) {
+            for (int j=0; j<matrixDim; j++) {
+                Matrix[i][j] = MatrixResult[i*matrixDim + j];
+            }
+        }
+        for (int i=0; i<4; i++) {
+            for (int j=0; j<blocksize*blocksize; j++) {
+                M[i][j] = 0;
+            }
+        }
+    }
 
     MPI_Barrier(MPI_COMM_WORLD);
-    if (rank==0){    
-        fprintf(stderr, "Final Matrix\n");
-        print_matrix(MatrixResult, matrixDim);
+    if (VERBOSE || rank==0) {
+        fprintf(stderr, "Process %d - Final Matrix\n", rank);
+
+        // print_matrix(MatrixResult, matrixDim);
+        for (int i=0; i<matrixDim; i++) {
+            for (int j=0; j<matrixDim; j++) {
+                fprintf(stderr, "%d ", MatrixResult[i*matrixDim + j]);
+            }
+            fprintf(stderr, "\n");
+        }
     }
 
     for (int i = 0; i < matrixDim; ++i) {free(Matrix[i]);}
@@ -150,9 +164,9 @@ exit:
     return 0;
 }
 
-int fox_alg(int rank, int numblocks, int blocksize, int* M[], int matrixDim, int** M0, int** M1, int** MR) {
+int fox_alg(int rank, int numblocks, int blocksize, int* M[], int matrixDim, int** M0, int** M1, int* MR) {
     if (VERBOSE) {
-        fprintf(stderr, "   <fox_alg> Process %d: Inside fox_alg. Vars: \n       NumBlocks=%d | BlockSize=%d | M[0][0]=%d | MatrixDim=%d | M0[0][0]=%d | M1[0][0]=%d | MR[0][0]=%d\n", rank, numblocks, blocksize, M[0][0], matrixDim, M0[0][0], M1[0][0], MR[0][0]);
+        fprintf(stderr, "   <fox_alg> Process %d: Inside fox_alg. Vars: \n       NumBlocks=%d | BlockSize=%d | M[0][0]=%d | MatrixDim=%d | M0[0][0]=%d | M1[0][0]=%d | MR[0][0]=\n", rank, numblocks, blocksize, M[0][0], matrixDim, M0[0][0], M1[0][0]);
     }
     
     int i, j, myRow, myCol;
@@ -206,51 +220,56 @@ int fox_alg(int rank, int numblocks, int blocksize, int* M[], int matrixDim, int
         }
     }
 
+    
+    src = ( myRow + 1 ) % numblocks;            // Process Source in our cart grid (neighbour)
+    dst = ( myRow + numblocks - 1) % numblocks; // Process Destination in our cart grid (neighbour)
+
+    if(VERBOSE)
+      fprintf(stderr, "Clone %d has src = %d and dst = %d\n", gridRank, src, dst);
+
+    for (i = 0; i < numblocks; i++) {
+        int root = ( myRow  + i ) % numblocks;
+        if(VERBOSE) 
+            fprintf(stderr, "    <fox_alg> Process %d This is my root %d\n", rank, root);
+        if(root == myCol){
+            //snd my matrix A to neighbour
+            if (VERBOSE) {fprintf(stderr, "    <fox_alg> Process %d sending matrix A to neighbour\n", root);}
+            MPI_Bcast(M[0], blocksquare, MPI_INT, root, rowComm);
+            block_mult(M[2], M[0], M[1], blocksize); 
+        } else {
+            //rcv an A from neighbour
+            if (VERBOSE) {fprintf(stderr, "    <fox_alg> Process %d receiving matrix A from neighbour\n", root);}
+            MPI_Bcast(M[3], blocksquare, MPI_INT, root, rowComm);
+            block_mult(M[2], M[3], M[1], blocksize); 
+        }
+ 
+        //   rotate B's 
+        MPI_Sendrecv_replace(M[1], blocksquare, MPI_INT, dst, tag, src, tag, colComm, &status);
+
+    }
+
+    if (VERBOSE) {fprintf(stderr, "Clone %d computed:\n\n", rank);}
+
+    // Writing C
+    MPI_Gather(M[2], blocksquare, MPI_INT, MR, blocksquare, MPI_INT, 0, MPI_COMM_WORLD);
+
+    // Switch order of matrix result
+    if (rank==0) {
+        int *tmp = (int *)malloc(matrixDim*matrixDim * sizeof(int));
+        int next_elem = 0;
+        for (int n=0; n<numblocks*numblocks; n++) {
+            for (int i=0; i<blocksize; i++) {
+                for (int j=0; j<blocksize; j++) {
+                    int row = (int) n / numblocks;
+                    int col = n % numblocks;
+                    tmp[i*matrixDim + j + col*blocksize + row*blocksize*matrixDim] = MR[next_elem];
+                    next_elem++;
+                }
+            }
+        }
+        for (int i=0; i<matrixDim*matrixDim; i++) {
+            MR[i] = tmp[i];
+        }
+    }
     return 0;
 }
-
-// int fox_alg(int rank, int numblocks, int blocksize, int* M[], int matrixDim, int** M0, int** M1, int** MR) {
-    
-    
-//     for(i = 0; i < blocksize; i++) {
-//         get_block_row(**M0, matrixDim, myRow, myCol, i, blocksize, &(M[0][i*blocksize]));
-//         get_block_row(**M1, matrixDim, myRow, myCol, i, blocksize, &(M[1][i*blocksize]));
-//     }
-
-    
-//     src = ( myRow + 1 ) % blocksize;      // Process Source in our cart grid (neighbour)
-//     dst = ( myRow + blocksize - 1) % blocksize; // Process Destinatoin in our cart grid (neighbour)
-
-//     for (i = 0; i < blocksize; i++) {
-//       int root = ( myRow  + i ) % blocksize;
-//       if(root == myCol){
-//         //snd my matrix A to neighbour
-//         MPI_Bcast(M[0], blocksquare, MPI_INT, root, rowComm);
-//         block_mult(M[2],M[0],M[1],blocksize); 
-//       } else {
-//         //rcv an A from neighbour
-//         MPI_Bcast(M[3], blocksquare, MPI_INT, root, rowComm);
-//         block_mult(M[2], M[3], M[1],blocksize); 
-//       }
-
-//       //rotate B's 
-//       MPI_Sendrecv_replace(M[1], blocksquare, MPI_INT, dst, tag, src, tag, colComm, &status);
-
-//     }
-
-//     fprintf(stderr, "Clone %d computed:\n\n", rank);
-//     for(i = 0; i < blocksquare; i++){
-//       fprintf(stderr, "%5d ", (M[2][i]));
-//       if((( i + 1) % blocksize) == 0)fprintf(stderr, "\n");
-//     }
-//     fprintf(stderr, "\n");
-    
-    
-    
-//     // Writing C
-//     fprintf(stderr, "Writing C\n");
-//     for(i = 0; i < blocksize; i++)
-//       set_block_row(**MR, matrixDim, myRow, myCol, i, blocksize, &(M[2][i*blocksize]));
-
-//     return 0;
-// }
