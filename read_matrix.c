@@ -7,17 +7,23 @@
 #define dim_cart_comm 2
 #define tag 0
 #define VERBOSE 0
+#define INF 99999
+
 int matrixDim, **Matrix;
 
 int fox_alg(int, int, int, int**, int, int**, int**, int*);
 
-void block_mult(int* c, int* a, int* b, int blk){
+int min(int v1, int v2){
+    return v1<v2 ? v1 : v2;
+}
+
+void min_plus_matrix(int* c, int* a, int* b, int blk){
   int i,j,k;
   
   for (i = 0; i < blk; i++)
     for (j = 0; j < blk; j ++)
       for (k = 0; k < blk; k++)
-        c[i*blk+j] += (a[i*blk+k] * b[k*blk+j]);
+        c[i*blk+j] = min(c[i*blk+j], (a[i*blk+k] + b[k*blk+j]));
 }
 
 void print_matrix(int* Matrix[], int dim) {
@@ -49,7 +55,7 @@ void read_matrix(int dim, int* Matrix[]) {
 int main(int argc, char **argv) {
     // Create an int and a char variable
     int numprocs, rank, numblocks, blocksize;
-    int *M[4];  // A_ij = M[0]  B_hk = M[1] Cxy = M[2]  TMP  = M[3]     (These are all blocks [sub matrixes]) 
+    int *M[4];  // A_ij = M[0]  B_hk = M[1] C = M[2]  TMP  = M[3]     (These are all blocks [sub matrixes]) 
     long startTime = time(NULL); 
 
     MPI_Init(&argc, &argv);
@@ -112,7 +118,13 @@ int main(int argc, char **argv) {
     
     // Initializing each blocks sub matrixes (A, B, Result and a temporary one)
     for (int i=0; i<4; i++) {
-        M[i] = (int *)calloc(sizeof(int), blocksize * blocksize);
+        if (i==3) {
+            M[i] = (int *)malloc(sizeof(int) * blocksize * blocksize);
+            for (int j=0; j<blocksize*blocksize; j++) { M[i][j] = INF;}
+        }
+        else {
+            M[i] = (int *)calloc(sizeof(int), blocksize * blocksize);
+        }
     }
     if (!(M[0] && M[1] && M[2] && M[3])) {
         fprintf(stderr,  "Out of memory!\n");
@@ -121,7 +133,7 @@ int main(int argc, char **argv) {
         goto exit;
     }
 
-    for (int n=0; n<2; n++) {
+    for (int step=0; step<matrixDim-2; step++) {
         if (VERBOSE) {fprintf(stderr, "Process %d: Starting Fox_alg\n", rank);}
         fox_alg(rank, numblocks, blocksize, M, matrixDim, Matrix, Matrix, MatrixResult); 
         if (VERBOSE) {fprintf(stderr, "Process %d: Finished Fox_alg\n", rank);}
@@ -135,7 +147,8 @@ int main(int argc, char **argv) {
         }
         for (int i=0; i<4; i++) {
             for (int j=0; j<blocksize*blocksize; j++) {
-                M[i][j] = 0;
+                if (i==3) { M[i][j] = INF;}
+                else {M[i][j] = 0;}
             }
         }
     }
@@ -235,12 +248,12 @@ int fox_alg(int rank, int numblocks, int blocksize, int* M[], int matrixDim, int
             //snd my matrix A to neighbour
             if (VERBOSE) {fprintf(stderr, "    <fox_alg> Process %d sending matrix A to neighbour\n", root);}
             MPI_Bcast(M[0], blocksquare, MPI_INT, root, rowComm);
-            block_mult(M[2], M[0], M[1], blocksize); 
+            min_plus_matrix(M[2], M[0], M[1], blocksize); 
         } else {
             //rcv an A from neighbour
             if (VERBOSE) {fprintf(stderr, "    <fox_alg> Process %d receiving matrix A from neighbour\n", root);}
             MPI_Bcast(M[3], blocksquare, MPI_INT, root, rowComm);
-            block_mult(M[2], M[3], M[1], blocksize); 
+            min_plus_matrix(M[2], M[3], M[1], blocksize); 
         }
  
         //   rotate B's 
