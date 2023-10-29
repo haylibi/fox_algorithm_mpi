@@ -16,41 +16,71 @@ int fox_alg(int, int, int, int**, int, int**, int**, int*);
 int min(int v1, int v2){
     return v1<v2 ? v1 : v2;
 }
-
-void min_plus_matrix(int* c, int* a, int* b, int blk){
+void min_plus_matrix(int* a, int* b, int* c, int blksize){
   int i,j,k;
   
-  for (i = 0; i < blk; i++)
-    for (j = 0; j < blk; j ++)
-      for (k = 0; k < blk; k++)
-        c[i*blk+j] = min(c[i*blk+j], (a[i*blk+k] + b[k*blk+j]));
+  for (i = 0; i < blksize; i++)
+    for (j = 0; j < blksize; j ++)
+      for (k = 0; k < blksize; k++) {
+        c[i*blksize+j] = min(c[i*blksize+j], (a[i*blksize+k] + b[k*blksize+j]));
+      }
 }
 
 void print_matrix(int* Matrix[], int dim) {
     for (int i=0; i<dim; i++) {
         for (int j=0; j<dim; j++) {
-            fprintf(stderr, "%d ", Matrix[i][j]);
+            if (Matrix[i][j] < INF) {
+                fprintf(stderr, "%d ", Matrix[i][j]);
+            } else {fprintf(stderr, "0 ");}
+        }
+        fprintf(stderr, "\n");
+    }
+}
+void print_contiguous_matrix(int* Matrix, int dim) {
+    for (int i=0; i<dim; i++) {
+        for (int j=0; j<dim; j++) {
+            if (Matrix[i*dim + j] < INF) {
+                fprintf(stderr, "%d ", Matrix[i*dim + j]);
+            } else {fprintf(stderr, "0 ");}
         }
         fprintf(stderr, "\n");
     }
 }
 
-
 // Given a dimention this function reads a matrix from that dim*dim inputs
 void read_matrix(int dim, int* Matrix[]) {
-    if (VERBOSE) {
-        fprintf(stderr, "Reading matrix of size (%d)\n", matrixDim);
-    }
+    if (VERBOSE) {fprintf(stderr, "Reading matrix of size (%d)\n", matrixDim);}
     for (int i=0; i<dim; ++i) {
         for (int j=0; j<dim; ++j) {
             scanf("%d", &Matrix[i][j]);
+            if (Matrix[i][j] == 0 & i!=j) {Matrix[i][j] = INF;}
         }
     }
-    if (VERBOSE) {
-        fprintf(stderr, "Finished reading input\n");
-    }
+    if (VERBOSE) {fprintf(stderr, "Finished reading input\n");}
 }
 
+void alloc_contiguous(int** V, int dim){
+    (*V) = (int *)malloc(dim*dim*sizeof(int));
+}
+void alloc_2d(int*** V, int dim){
+    (* V) = (int **)malloc(dim * sizeof(int *));
+    for (int i=0; i<dim; i++) {(*V)[i] = (int *)malloc(dim * sizeof(int ));}
+}
+
+void copy_contiguous_to_2d(int* V1, int** V2, int dim) {
+    for (int i=0; i<dim; i++){
+        for (int j=0; j<dim; j++) {
+            V2[i][j] = V1[i*dim + j];
+        }
+    }
+}
+void copy_2d_to_contiguous(int** V1, int* V2, int dim) {
+    for (int i=0; i<dim; i++){
+        for (int j=0; j<dim; j++) {
+            V2[i*dim + j] = V1[i][j];
+        }
+    }
+}
 
 int main(int argc, char **argv) {
     // Create an int and a char variable
@@ -65,12 +95,7 @@ int main(int argc, char **argv) {
     // Reading matrix from INPUT
     if (rank == 0) {
         scanf("%d", &matrixDim);
-        if (VERBOSE) {
-            fprintf(stderr, "Matrix of size (%d, %d)\n", matrixDim, matrixDim);
-        }
-        Matrix = (int **)malloc(matrixDim * sizeof(int *));
-        for (int i=0; i<matrixDim; i++) 
-            Matrix[i] = (int *)malloc(matrixDim * sizeof(int));
+        alloc_2d(&Matrix, matrixDim);
         read_matrix(matrixDim, Matrix);
     }
 
@@ -78,7 +103,7 @@ int main(int argc, char **argv) {
     MPI_Bcast(&matrixDim, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     // Validating number of processes for matrix size
-    if (numprocs % (int) sqrt(matrixDim) != 0) {
+    if (matrixDim % (int) sqrt(numprocs) != 0) {
         if (rank==0){    
             fprintf(stderr, "nproc = %d | MatrixSize = %d. We must have p=m*m and matrix_size %% m = 0.\n",  numprocs, matrixDim);
             for (int i = 0; i < matrixDim; ++i) {
@@ -92,11 +117,8 @@ int main(int argc, char **argv) {
     }
 
     // Initialize "Matrix" in processes which are not the "master" process
-    if (rank != 0) {
-        Matrix = (int **)malloc(matrixDim * sizeof(int *));
-        for (int i=0; i<matrixDim; i++) 
-            Matrix[i] = (int *)malloc(matrixDim * sizeof(int));
-    }
+    if (rank != 0) {alloc_2d(&Matrix, matrixDim);}
+
 
     // Sharing initial matrix size to all processes to initialize 
     for (int i=0; i<matrixDim; i++) {
@@ -105,26 +127,17 @@ int main(int argc, char **argv) {
 
 
     // Allocating memory for final result matrix
-    // int *MatrixResult[matrixDim];  // A_ij = M[0]  B_hk = M[1] Cxy = M[2]  TMP  = M[3]     (These are all blocks [sub matrixes]) 
-    // for (int i=0; i<matrixDim; i++) {
-    //     MatrixResult[i] = (int *)malloc(matrixDim * sizeof(int));
-    // }
-    int* MatrixResult = (int *)malloc(matrixDim*matrixDim * sizeof(int));
+    int* MatrixResult;
+    alloc_contiguous(&MatrixResult, matrixDim);
+
 
     // Calculations for array sizes
     numblocks = sqrt(numprocs);         // Find how many blocks we'll have (num_process = numblocks*numblocks)
     blocksize = matrixDim / numblocks;  // Finding the size of each block
 
-    
-    // Initializing each blocks sub matrixes (A, B, Result and a temporary one)
+    // Initialize M -> Variable to store all temporary blocks
     for (int i=0; i<4; i++) {
-        if (i==3) {
-            M[i] = (int *)malloc(sizeof(int) * blocksize * blocksize);
-            for (int j=0; j<blocksize*blocksize; j++) { M[i][j] = INF;}
-        }
-        else {
-            M[i] = (int *)calloc(sizeof(int), blocksize * blocksize);
-        }
+        M[i] = (int *)malloc(sizeof(int) * blocksize * blocksize);
     }
     if (!(M[0] && M[1] && M[2] && M[3])) {
         fprintf(stderr,  "Out of memory!\n");
@@ -132,42 +145,42 @@ int main(int argc, char **argv) {
             free(M[i]);
         goto exit;
     }
+    
 
     for (int step=0; step<matrixDim-2; step++) {
-        if (VERBOSE) {fprintf(stderr, "Process %d: Starting Fox_alg\n", rank);}
+
+        // Resetting each blocks sub matrixes (A, B, Result and a temporary one)
+        // Result block needs to start with all "INF" values in order to pick min(C, A+B) in each prod "min-sum"
+        for (int i=0; i<4; i++) {
+            for (int j=0; j<blocksize*blocksize; j++) { 
+                M[i][j] = 0;
+            }
+        }
+
+        // From D_k find D_2k = D_k*D_k
         fox_alg(rank, numblocks, blocksize, M, matrixDim, Matrix, Matrix, MatrixResult); 
-        if (VERBOSE) {fprintf(stderr, "Process %d: Finished Fox_alg\n", rank);}
+
+        // Share result accross all processes
         MPI_Bcast(MatrixResult, matrixDim*matrixDim, MPI_INT, 0, MPI_COMM_WORLD);
         
-        
-        for (int i=0; i<matrixDim; i++) {
-            for (int j=0; j<matrixDim; j++) {
-                Matrix[i][j] = MatrixResult[i*matrixDim + j];
-            }
-        }
-        for (int i=0; i<4; i++) {
-            for (int j=0; j<blocksize*blocksize; j++) {
-                if (i==3) { M[i][j] = INF;}
-                else {M[i][j] = 0;}
-            }
-        }
+        // Copy "MatrixResult" to "Matrix" to repeat process
+        copy_contiguous_to_2d(MatrixResult, Matrix, matrixDim);
+        // for (int i=0; i<matrixDim; i++) {
+        //     for (int j=0; j<matrixDim; j++) {
+        //         Matrix[i][j] = MatrixResult[i*matrixDim + j];
+        //     }
+        // }
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
-    if (VERBOSE || rank==0) {
-        fprintf(stderr, "Process %d - Final Matrix\n", rank);
+    if (rank==0) {print_contiguous_matrix(MatrixResult, matrixDim);}
 
-        // print_matrix(MatrixResult, matrixDim);
-        for (int i=0; i<matrixDim; i++) {
-            for (int j=0; j<matrixDim; j++) {
-                fprintf(stderr, "%d ", MatrixResult[i*matrixDim + j]);
-            }
-            fprintf(stderr, "\n");
-        }
-    }
-
+    // Freeing matrix memory space
     for (int i = 0; i < matrixDim; ++i) {free(Matrix[i]);}
     free(Matrix);
+    free(MatrixResult);
+    for(int i = 0; i < 4; i++) {free(M[i]);}
+
     MPI_Finalize();
     return 0;
 
@@ -214,20 +227,17 @@ int fox_alg(int rank, int numblocks, int blocksize, int* M[], int matrixDim, int
     if (VERBOSE) {fprintf(stderr, "   <fox_alg> Process %d - Initial grid coords (%d,%d) | Rank %d\n", rank, myRow, myCol, gridRank);}
     
     for(i = 0; i < blocksize; i++) {
-        // get_block_row(**M0, matrixDim, myRow, myCol, i, blocksize, &(M[0][i*blocksize]));
         for (j=0; j<blocksize; j++) {
             M[0][i*blocksize + j] = M0[myRow*blocksize + i][myCol*blocksize + j];
-        }
-        // get_block_row(**M0, matrixDim, myRow, myCol, i, blocksize, &(M[0][i*blocksize]));
-        for (j=0; j<blocksize; j++) {
             M[1][i*blocksize + j] = M1[myRow*blocksize + i][myCol*blocksize + j];
+            M[2][i*blocksize + j] = M0[myRow*blocksize + i][myCol*blocksize + j];   // We need to have C as a copy of initial matrix to keep considering previous shortest paths
         }
     }
     if (VERBOSE) {
         fprintf(stderr, "   <fox_alg> Process %d - Matrix[0] first step:\n", rank);
         for (int i=0; i<blocksize; i++) {
             for (int j=0; j<blocksize; j++) {
-                fprintf(stderr, "       <fox_alg> Process %d - M[0][%d, %d] = %d ", rank, i, j, M[0][i*blocksize + j]);
+                fprintf(stderr, "       <fox_alg> Process %d - M[0][%d, %d] = %d ", rank, i, j, M[2][i*blocksize + j]);
             }
             fprintf(stderr, "\n");
         }
@@ -248,12 +258,12 @@ int fox_alg(int rank, int numblocks, int blocksize, int* M[], int matrixDim, int
             //snd my matrix A to neighbour
             if (VERBOSE) {fprintf(stderr, "    <fox_alg> Process %d sending matrix A to neighbour\n", root);}
             MPI_Bcast(M[0], blocksquare, MPI_INT, root, rowComm);
-            min_plus_matrix(M[2], M[0], M[1], blocksize); 
+            min_plus_matrix(M[0], M[1], M[2], blocksize); 
         } else {
             //rcv an A from neighbour
             if (VERBOSE) {fprintf(stderr, "    <fox_alg> Process %d receiving matrix A from neighbour\n", root);}
             MPI_Bcast(M[3], blocksquare, MPI_INT, root, rowComm);
-            min_plus_matrix(M[2], M[3], M[1], blocksize); 
+            min_plus_matrix(M[3], M[1], M[2], blocksize); 
         }
  
         //   rotate B's 
