@@ -74,13 +74,6 @@ void copy_contiguous_to_2d(int* V1, int** V2, int dim) {
         }
     }
 }
-void copy_2d_to_contiguous(int** V1, int* V2, int dim) {
-    for (int i=0; i<dim; i++){
-        for (int j=0; j<dim; j++) {
-            V2[i*dim + j] = V1[i][j];
-        }
-    }
-}
 
 int main(int argc, char **argv) {
     // Create an int and a char variable
@@ -103,14 +96,14 @@ int main(int argc, char **argv) {
     MPI_Bcast(&matrixDim, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     // Validating number of processes for matrix size
-    if (matrixDim % (int) sqrt(numprocs) != 0) {
+    if (matrixDim % (int) sqrt(numprocs) != 0 || numprocs != pow((int)sqrt(numprocs), 2)) {
         if (rank==0){    
-            fprintf(stderr, "nproc = %d | MatrixSize = %d. We must have p=m*m and matrix_size %% m = 0.\n",  numprocs, matrixDim);
-            for (int i = 0; i < matrixDim; ++i) {
-                free(Matrix[i]);
+            fprintf(stderr, "ERROR: Invalid configuration!\nproc = %d | MatrixSize = %d.\nWe must have nproc=m*m and matrix_size %% m = 0.\nPlease choose one of the following nproc:\n",  numprocs, matrixDim);
+            for (int i=2; i<matrixDim; i++) {
+                if (matrixDim % i == 0) {fprintf(stderr, "%d ", i*i);}
             }
+            fprintf(stderr, "\n");
             free(Matrix);
-            fprintf(stderr, "Exiting with error after %ld seconds\n", time(NULL) - startTime);
         }
         MPI_Finalize();
         return 0;

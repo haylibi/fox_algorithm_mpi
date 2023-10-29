@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Assuming your MPI program is compiled as read_matrix.out
-MPI_EXECUTABLE="./read_matrix.out"
+MPI_EXECUTABLE="./a.out"
 
 # Input file
 INPUT_DIR="./inputs"
