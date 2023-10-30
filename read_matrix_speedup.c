@@ -17,7 +17,7 @@ MPI_Comm gridComm, rowComm, colComm;
 int myRow, myCol;
 
 
-void fox_alg(int, int, int**);
+void fox_alg(int, int, int*, int*, int*, int*);
 
 int min(int v1, int v2){
     return v1<v2 ? v1 : v2;
@@ -64,7 +64,7 @@ void copy_matrix(int* V1, int* V2, int dim) {
 int main(int argc, char **argv) {
     // Create an int and a char variable
     int numprocs, rank, numblocks, blocksize;
-    int *M[4];  // A_ij = M[0]  B_hk = M[1] C = M[2]    AUX  = M[3]     (These are all blocks [sub matrixes]) 
+    int *Matrix_A, *Matrix_B, *Matrix_C, *Matrix_aux;
     long startTime = time(NULL); 
 
     MPI_Init(&argc, &argv);
@@ -114,13 +114,16 @@ int main(int argc, char **argv) {
     blocksize = matrixDim / numblocks;  // Finding the size of each block
 
     // Initialize M -> Variable to store all temporary blocks (A, B, C and aux)
-    for (int i=0; i<4; i++) {
-        M[i] = (int *)malloc(sizeof(int) * blocksize * blocksize);
-    }
-    if (!(M[0] && M[1] && M[2] && M[3])) {
+    Matrix_A = (int *)malloc(sizeof(int) * blocksize * blocksize);
+    Matrix_B = (int *)malloc(sizeof(int) * blocksize * blocksize);
+    Matrix_C = (int *)malloc(sizeof(int) * blocksize * blocksize);
+    Matrix_aux = (int *)malloc(sizeof(int) * blocksize * blocksize);
+    if (!(Matrix_A && Matrix_B && Matrix_C && Matrix_aux)) {
         fprintf(stderr,  "Out of memory!\n");
-        for(int i = 0; i < 4; i++) 
-            free(M[i]);
+        free(Matrix_A);
+        free(Matrix_B);
+        free(Matrix_C);
+        free(Matrix_aux);
         goto exit;
     }
     
@@ -158,25 +161,25 @@ int main(int argc, char **argv) {
     // Creating each process A and B block matrix
     for(int i = 0; i < blocksize; i++) {
         for (int j=0; j<blocksize; j++) {
-            M[0][i*blocksize + j] = Matrix[(myRow*blocksize + i)*matrixDim + myCol*blocksize + j];
-            M[1][i*blocksize + j] = Matrix[(myRow*blocksize + i)*matrixDim + myCol*blocksize + j];
-            M[2][i*blocksize + j] = INF;
+            Matrix_A[i*blocksize + j] = Matrix[(myRow*blocksize + i)*matrixDim + myCol*blocksize + j];
+            Matrix_B[i*blocksize + j] = Matrix[(myRow*blocksize + i)*matrixDim + myCol*blocksize + j];
+            Matrix_C[i*blocksize + j] = INF;
         }
     }
 
-    for (int step=0; step<matrixDim-2; step++) {
+    for (int step=1; step<matrixDim-1; step*=2) {
 
         // From D_k find D_2k = D_k*D_k
-        fox_alg(numblocks, blocksize, M); 
+        fox_alg(numblocks, blocksize, Matrix_A, Matrix_B, Matrix_C, Matrix_aux); 
 
         // Copy Block C to Blocks A and B to repeat process
-        copy_matrix(M[2], M[0], blocksize);
-        copy_matrix(M[2], M[1], blocksize);
+        copy_matrix(Matrix_C, Matrix_A, blocksize);
+        copy_matrix(Matrix_C, Matrix_B, blocksize);
     }
 
 
     // Writing C
-    MPI_Gather(M[2], blocksquare, MPI_INT, MatrixResult, blocksquare, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Gather(Matrix_C, blocksquare, MPI_INT, MatrixResult, blocksquare, MPI_INT, 0, MPI_COMM_WORLD);
 
     // Switch order of matrix result
     if (rank==0) {
@@ -204,8 +207,10 @@ int main(int argc, char **argv) {
     // Freeing matrix memory space
     free(Matrix);
     free(MatrixResult);
-    for(int i = 0; i < 4; i++) {free(M[i]);}
-
+    free(Matrix_A);
+    free(Matrix_B);
+    free(Matrix_C);
+    free(Matrix_aux);
     MPI_Finalize();
     return 0;
 
@@ -215,20 +220,20 @@ exit:
     return 0;
 }
 
-void fox_alg(int numblocks, int blocksize, int* M[]) {
+void fox_alg(int numblocks, int blocksize, int* Matrix_A, int* Matrix_B, int* Matrix_C, int* Matrix_aux) {
     int i, j, root;
     for (i = 0; i < numblocks; i++) {
         root = ( myRow  + i ) % numblocks;
         if(root == myCol){
             //snd my matrix A to neighbour
-            MPI_Bcast(M[0], blocksquare, MPI_INT, root, rowComm);
-            min_plus_matrix(M[0], M[1], M[2], blocksize); 
+            MPI_Bcast(Matrix_A, blocksquare, MPI_INT, root, rowComm);
+            min_plus_matrix(Matrix_A, Matrix_B, Matrix_C, blocksize); 
         } else {
             //rcv an A from neighbour
-            MPI_Bcast(M[3], blocksquare, MPI_INT, root, rowComm);
-            min_plus_matrix(M[3], M[1], M[2], blocksize); 
+            MPI_Bcast(Matrix_aux, blocksquare, MPI_INT, root, rowComm);
+            min_plus_matrix(Matrix_aux, Matrix_B, Matrix_C, blocksize); 
         }
         //   rotate B's 
-        MPI_Sendrecv_replace(M[1], blocksquare, MPI_INT, dst, tag, src, tag, colComm, &status);
+        MPI_Sendrecv_replace(Matrix_B, blocksquare, MPI_INT, dst, tag, src, tag, colComm, &status);
     }
 }
