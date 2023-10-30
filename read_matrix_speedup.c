@@ -34,21 +34,21 @@ void min_plus_matrix(int* a, int* b, int* c, int blksize){
 
 void print_matrix(int* Matrix, int dim) {
     for (int i=0; i<dim; i++) {
-        for (int j=0; j<dim-1; j++) {fprintf(stderr, "%d ", Matrix[i*dim + j]);}
-        fprintf(stderr, "%d\n", Matrix[i*dim + dim-1]);
+        for (int j=0; j<dim-1; j++) {printf("%d ", Matrix[i*dim + j]);}
+        printf("%d\n", Matrix[i*dim + dim-1]);
     }
 }
 
 // Given a dimention this function reads a matrix from that dim*dim inputs
 void read_matrix(int dim, int* Matrix) {
-    if (VERBOSE) {fprintf(stderr, "Reading matrix of size (%d)\n", matrixDim);}
+    if (VERBOSE) {printf("Reading matrix of size (%d)\n", matrixDim);}
     for (int i=0; i<dim; ++i) {
         for (int j=0; j<dim; ++j) {
             scanf("%d", &Matrix[i*dim + j]);
             if (Matrix[i*dim + j] == 0 & i!=j) {Matrix[i*dim + j] = INF;}
         }
     }
-    if (VERBOSE) {fprintf(stderr, "Finished reading input\n");}
+    if (VERBOSE) {printf("Finished reading input\n");}
 }
 void alloc_contiguous(int** V, int dim){
     (*V) = (int *)malloc(dim*dim*sizeof(int));
@@ -83,14 +83,17 @@ int main(int argc, char **argv) {
 
     // Validating number of processes for matrix size
     if (matrixDim % (int) sqrt(numprocs) != 0 || numprocs != pow((int)sqrt(numprocs), 2)) {
-        if (rank==0){    
-            fprintf(stderr, "ERROR: Invalid configuration!\nproc = %d | MatrixSize = %d.\nWe must have nproc=m*m and matrix_size %% m = 0.\nPlease choose one of the following nproc:\n",  numprocs, matrixDim);
-            for (int i=2; i<matrixDim; i++) {
-                if (matrixDim % i == 0) {fprintf(stderr, "%d ", i*i);}
+        if (rank==0){
+            printf("ERROR: Invalid configuration!");
+            if (VERBOSE) {
+                printf("ERROR: Invalid configuration!\nproc = %d | MatrixSize = %d.\nWe must have nproc=m*m and matrix_size %% m = 0.\nPlease choose one of the following nproc:\n",  numprocs, matrixDim);
+                for (int i=2; i<matrixDim; i++) {
+                    if (matrixDim % i == 0) {printf("%d ", i*i);}
+                }
+                printf("\n");
+                printf("Exiting with error after %ld seconds\n", time(NULL) - startTime);
             }
-            fprintf(stderr, "\n");
             free(Matrix);
-            fprintf(stderr, "Exiting with error after %ld seconds\n", time(NULL) - startTime);
         }
         MPI_Finalize();
         return 0;
@@ -119,7 +122,7 @@ int main(int argc, char **argv) {
     Matrix_C = (int *)malloc(sizeof(int) * blocksize * blocksize);
     Matrix_aux = (int *)malloc(sizeof(int) * blocksize * blocksize);
     if (!(Matrix_A && Matrix_B && Matrix_C && Matrix_aux)) {
-        fprintf(stderr,  "Out of memory!\n");
+        printf( "Out of memory!\n");
         free(Matrix_A);
         free(Matrix_B);
         free(Matrix_C);
@@ -156,7 +159,7 @@ int main(int argc, char **argv) {
     dst = ( myRow + numblocks - 1) % numblocks; // Process Destination in our cart grid (neighbour)
 
     if(VERBOSE)
-      fprintf(stderr, "Clone %d has src = %d and dst = %d\n", gridRank, src, dst);
+      printf("Clone %d has src = %d and dst = %d\n", gridRank, src, dst);
 
     // Creating each process A and B block matrix
     for(int i = 0; i < blocksize; i++) {
@@ -215,7 +218,7 @@ int main(int argc, char **argv) {
     return 0;
 
 exit:
-    fprintf(stderr, "Exiting with error after %ld seconds\n", time(NULL) - startTime);
+    printf("Exiting with error after %ld seconds\n", time(NULL) - startTime);
     MPI_Finalize();
     return 0;
 }
