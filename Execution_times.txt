@@ -1,0 +1,102 @@
+############################################################
+
+                 TRYING WITH '1' PROCESSES
+
+############################################################
+mpirun --hostfile hostfile -n 1 "./a.out" < "./inputs/input1200" > "./outputs/output_input1200-np_1.txt" 2>&1
+Elapsed Time: 85 seconds
+mpirun --hostfile hostfile -n 1 "./a.out" < "./inputs/input300" > "./outputs/output_input300-np_1.txt" 2>&1
+Elapsed Time: 3 seconds
+mpirun --hostfile hostfile -n 1 "./a.out" < "./inputs/input5" > "./outputs/output_input5-np_1.txt" 2>&1
+Elapsed Time: 2 seconds
+mpirun --hostfile hostfile -n 1 "./a.out" < "./inputs/input6" > "./outputs/output_input6-np_1.txt" 2>&1
+Elapsed Time: 1 seconds
+mpirun --hostfile hostfile -n 1 "./a.out" < "./inputs/input600" > "./outputs/output_input600-np_1.txt" 2>&1
+Elapsed Time: 11 seconds
+mpirun --hostfile hostfile -n 1 "./a.out" < "./inputs/input900" > "./outputs/output_input900-np_1.txt" 2>&1
+Elapsed Time: 34 seconds
+############################################################
+
+                 TRYING WITH '4' PROCESSES
+
+############################################################
+mpirun --hostfile hostfile -n 4 "./a.out" < "./inputs/input1200" > "./outputs/output_input1200-np_4.txt" 2>&1
+Elapsed Time: 27 seconds
+mpirun --hostfile hostfile -n 4 "./a.out" < "./inputs/input300" > "./outputs/output_input300-np_4.txt" 2>&1
+Elapsed Time: 1 seconds
+mpirun --hostfile hostfile -n 4 "./a.out" < "./inputs/input5" > "./outputs/output_input5-np_4.txt" 2>&1
+Elapsed Time: 2 seconds
+mpirun --hostfile hostfile -n 4 "./a.out" < "./inputs/input6" > "./outputs/output_input6-np_4.txt" 2>&1
+Elapsed Time: 1 seconds
+mpirun --hostfile hostfile -n 4 "./a.out" < "./inputs/input600" > "./outputs/output_input600-np_4.txt" 2>&1
+Elapsed Time: 5 seconds
+mpirun --hostfile hostfile -n 4 "./a.out" < "./inputs/input900" > "./outputs/output_input900-np_4.txt" 2>&1
+Elapsed Time: 10 seconds
+############################################################
+
+                 TRYING WITH '9' PROCESSES
+
+############################################################
+mpirun --hostfile hostfile -n 9 "./a.out" < "./inputs/input1200" > "./outputs/output_input1200-np_9.txt" 2>&1
+Elapsed Time: 20 seconds
+mpirun --hostfile hostfile -n 9 "./a.out" < "./inputs/input300" > "./outputs/output_input300-np_9.txt" 2>&1
+Elapsed Time: 2 seconds
+mpirun --hostfile hostfile -n 9 "./a.out" < "./inputs/input5" > "./outputs/output_input5-np_9.txt" 2>&1
+Elapsed Time: 1 seconds
+mpirun --hostfile hostfile -n 9 "./a.out" < "./inputs/input6" > "./outputs/output_input6-np_9.txt" 2>&1
+Elapsed Time: 2 seconds
+mpirun --hostfile hostfile -n 9 "./a.out" < "./inputs/input600" > "./outputs/output_input600-np_9.txt" 2>&1
+Elapsed Time: 4 seconds
+mpirun --hostfile hostfile -n 9 "./a.out" < "./inputs/input900" > "./outputs/output_input900-np_9.txt" 2>&1
+Elapsed Time: 8 seconds
+############################################################
+
+                 TRYING WITH '16' PROCESSES
+
+############################################################
+mpirun --hostfile hostfile -n 16 "./a.out" < "./inputs/input1200" > "./outputs/output_input1200-np_16.txt" 2>&1
+Elapsed Time: 20 seconds
+mpirun --hostfile hostfile -n 16 "./a.out" < "./inputs/input300" > "./outputs/output_input300-np_16.txt" 2>&1
+Elapsed Time: 3 seconds
+mpirun --hostfile hostfile -n 16 "./a.out" < "./inputs/input5" > "./outputs/output_input5-np_16.txt" 2>&1
+Elapsed Time: 2 seconds
+mpirun --hostfile hostfile -n 16 "./a.out" < "./inputs/input6" > "./outputs/output_input6-np_16.txt" 2>&1
+Elapsed Time: 2 seconds
+mpirun --hostfile hostfile -n 16 "./a.out" < "./inputs/input600" > "./outputs/output_input600-np_16.txt" 2>&1
+Elapsed Time: 5 seconds
+mpirun --hostfile hostfile -n 16 "./a.out" < "./inputs/input900" > "./outputs/output_input900-np_16.txt" 2>&1
+Elapsed Time: 10 seconds
+############################################################
+
+                 TRYING WITH '25' PROCESSES
+
+############################################################
+mpirun --hostfile hostfile -n 25 "./a.out" < "./inputs/input1200" > "./outputs/output_input1200-np_25.txt" 2>&1
+Elapsed Time: 19 seconds
+mpirun --hostfile hostfile -n 25 "./a.out" < "./inputs/input300" > "./outputs/output_input300-np_25.txt" 2>&1
+Elapsed Time: 4 seconds
+mpirun --hostfile hostfile -n 25 "./a.out" < "./inputs/input5" > "./outputs/output_input5-np_25.txt" 2>&1
+Elapsed Time: 2 seconds
+mpirun --hostfile hostfile -n 25 "./a.out" < "./inputs/input6" > "./outputs/output_input6-np_25.txt" 2>&1
+Elapsed Time: 2 seconds
+mpirun --hostfile hostfile -n 25 "./a.out" < "./inputs/input600" > "./outputs/output_input600-np_25.txt" 2>&1
+Elapsed Time: 6 seconds
+mpirun --hostfile hostfile -n 25 "./a.out" < "./inputs/input900" > "./outputs/output_input900-np_25.txt" 2>&1
+Elapsed Time: 10 seconds
+############################################################
+
+                 TRYING WITH '36' PROCESSES
+
+############################################################
+mpirun --hostfile hostfile -n 36 "./a.out" < "./inputs/input1200" > "./outputs/output_input1200-np_36.txt" 2>&1
+Elapsed Time: 20 seconds
+mpirun --hostfile hostfile -n 36 "./a.out" < "./inputs/input300" > "./outputs/output_input300-np_36.txt" 2>&1
+Elapsed Time: 5 seconds
+mpirun --hostfile hostfile -n 36 "./a.out" < "./inputs/input5" > "./outputs/output_input5-np_36.txt" 2>&1
+Elapsed Time: 2 seconds
+mpirun --hostfile hostfile -n 36 "./a.out" < "./inputs/input6" > "./outputs/output_input6-np_36.txt" 2>&1
+Elapsed Time: 3 seconds
+mpirun --hostfile hostfile -n 36 "./a.out" < "./inputs/input600" > "./outputs/output_input600-np_36.txt" 2>&1
+Elapsed Time: 7 seconds
+mpirun --hostfile hostfile -n 36 "./a.out" < "./inputs/input900" > "./outputs/output_input900-np_36.txt" 2>&1
+Elapsed Time: 10 seconds
