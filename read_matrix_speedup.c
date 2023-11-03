@@ -137,14 +137,13 @@ int main(int argc, char **argv) {
     int rowDir[dim_cart_comm] = {0, 1};
     int optm = 1, gridRank, gridCoords[dim_cart_comm], row, col;
     blocksquare = blocksize*blocksize;
-    // Communicator creation based on a topology, we are using the comm_world and dividing it. basicamente é uma grid
-    // Podemos ter que criar um novo comunicador caso não queiramos usar o comum, will see
+    // Creating a communicator based on a topology by dividing the MPI_COMM_WORLD. Essentially, it forms a grid
     MPI_Cart_create(MPI_COMM_WORLD, dim_cart_comm, sizes, wrap, optm, &gridComm);
 
     // Attributing a gridRank for process inside the gridComm
     MPI_Comm_rank(gridComm, &gridRank);
     
-    // "Coordenadas" dos processos given o rank
+    // "Coordinates" of the processes given their ranks.
     MPI_Cart_coords(gridComm, gridRank, dim_cart_comm, gridCoords);
 
     // Dividing comunicator into rows and columns
@@ -228,15 +227,15 @@ void fox_alg(int numblocks, int blocksize, int* Matrix_A, int* Matrix_B, int* Ma
     for (i = 0; i < numblocks; i++) {
         root = ( myRow  + i ) % numblocks;
         if(root == myCol){
-            //snd my matrix A to neighbour
+            // snd my matrix A to neighbour
             MPI_Bcast(Matrix_A, blocksquare, MPI_INT, root, rowComm);
             min_plus_matrix(Matrix_A, Matrix_B, Matrix_C, blocksize); 
         } else {
-            //rcv an A from neighbour
+            // rcv an A from neighbour
             MPI_Bcast(Matrix_aux, blocksquare, MPI_INT, root, rowComm);
             min_plus_matrix(Matrix_aux, Matrix_B, Matrix_C, blocksize); 
         }
-        //   rotate B's 
+        // rotate B's 
         MPI_Sendrecv_replace(Matrix_B, blocksquare, MPI_INT, dst, tag, src, tag, colComm, &status);
     }
 }
