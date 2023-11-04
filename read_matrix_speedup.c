@@ -166,7 +166,7 @@ int main(int argc, char **argv) {
         for (int j=0; j<blocksize; j++) {
             Matrix_A[i*blocksize + j] = Matrix[(myRow*blocksize + i)*matrixDim + myCol*blocksize + j];
             Matrix_B[i*blocksize + j] = Matrix[(myRow*blocksize + i)*matrixDim + myCol*blocksize + j];
-            Matrix_C[i*blocksize + j] = INF;
+            Matrix_C[i*blocksize + j] = Matrix[(myRow*blocksize + i)*matrixDim + myCol*blocksize + j];
         }
     }
 
