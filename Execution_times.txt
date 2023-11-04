@@ -1,0 +1,102 @@
+############################################################
+
+                       FILE './inputs/input1200'                         
+
+############################################################
+mpirun --hostfile hostfile -n 1 "./a.out" < "./inputs/input1200" > "./outputs/output_input1200-np_1.txt" 2>&1
+Elapsed Time: 85269 milliseconds
+mpirun --hostfile hostfile -n 4 "./a.out" < "./inputs/input1200" > "./outputs/output_input1200-np_4.txt" 2>&1
+Elapsed Time: 23473 milliseconds
+mpirun --hostfile hostfile -n 9 "./a.out" < "./inputs/input1200" > "./outputs/output_input1200-np_9.txt" 2>&1
+Elapsed Time: 19464 milliseconds
+mpirun --hostfile hostfile -n 16 "./a.out" < "./inputs/input1200" > "./outputs/output_input1200-np_16.txt" 2>&1
+Elapsed Time: 20595 milliseconds
+mpirun --hostfile hostfile -n 25 "./a.out" < "./inputs/input1200" > "./outputs/output_input1200-np_25.txt" 2>&1
+Elapsed Time: 19017 milliseconds
+mpirun --hostfile hostfile -n 36 "./a.out" < "./inputs/input1200" > "./outputs/output_input1200-np_36.txt" 2>&1
+Elapsed Time: 19232 milliseconds
+############################################################
+
+                       FILE './inputs/input300'                         
+
+############################################################
+mpirun --hostfile hostfile -n 1 "./a.out" < "./inputs/input300" > "./outputs/output_input300-np_1.txt" 2>&1
+Elapsed Time: 2529 milliseconds
+mpirun --hostfile hostfile -n 4 "./a.out" < "./inputs/input300" > "./outputs/output_input300-np_4.txt" 2>&1
+Elapsed Time: 1790 milliseconds
+mpirun --hostfile hostfile -n 9 "./a.out" < "./inputs/input300" > "./outputs/output_input300-np_9.txt" 2>&1
+Elapsed Time: 1890 milliseconds
+mpirun --hostfile hostfile -n 16 "./a.out" < "./inputs/input300" > "./outputs/output_input300-np_16.txt" 2>&1
+Elapsed Time: 2908 milliseconds
+mpirun --hostfile hostfile -n 25 "./a.out" < "./inputs/input300" > "./outputs/output_input300-np_25.txt" 2>&1
+Elapsed Time: 3947 milliseconds
+mpirun --hostfile hostfile -n 36 "./a.out" < "./inputs/input300" > "./outputs/output_input300-np_36.txt" 2>&1
+Elapsed Time: 5254 milliseconds
+############################################################
+
+                       FILE './inputs/input5'                         
+
+############################################################
+mpirun --hostfile hostfile -n 1 "./a.out" < "./inputs/input5" > "./outputs/output_input5-np_1.txt" 2>&1
+Elapsed Time: 1484 milliseconds
+mpirun --hostfile hostfile -n 4 "./a.out" < "./inputs/input5" > "./outputs/output_input5-np_4.txt" 2>&1
+Elapsed Time: 1607 milliseconds
+mpirun --hostfile hostfile -n 9 "./a.out" < "./inputs/input5" > "./outputs/output_input5-np_9.txt" 2>&1
+Elapsed Time: 1733 milliseconds
+mpirun --hostfile hostfile -n 16 "./a.out" < "./inputs/input5" > "./outputs/output_input5-np_16.txt" 2>&1
+Elapsed Time: 1922 milliseconds
+mpirun --hostfile hostfile -n 25 "./a.out" < "./inputs/input5" > "./outputs/output_input5-np_25.txt" 2>&1
+Elapsed Time: 2484 milliseconds
+mpirun --hostfile hostfile -n 36 "./a.out" < "./inputs/input5" > "./outputs/output_input5-np_36.txt" 2>&1
+Elapsed Time: 2017 milliseconds
+############################################################
+
+                       FILE './inputs/input6'                         
+
+############################################################
+mpirun --hostfile hostfile -n 1 "./a.out" < "./inputs/input6" > "./outputs/output_input6-np_1.txt" 2>&1
+Elapsed Time: 1469 milliseconds
+mpirun --hostfile hostfile -n 4 "./a.out" < "./inputs/input6" > "./outputs/output_input6-np_4.txt" 2>&1
+Elapsed Time: 1513 milliseconds
+mpirun --hostfile hostfile -n 9 "./a.out" < "./inputs/input6" > "./outputs/output_input6-np_9.txt" 2>&1
+Elapsed Time: 1584 milliseconds
+mpirun --hostfile hostfile -n 16 "./a.out" < "./inputs/input6" > "./outputs/output_input6-np_16.txt" 2>&1
+Elapsed Time: 2012 milliseconds
+mpirun --hostfile hostfile -n 25 "./a.out" < "./inputs/input6" > "./outputs/output_input6-np_25.txt" 2>&1
+Elapsed Time: 2044 milliseconds
+mpirun --hostfile hostfile -n 36 "./a.out" < "./inputs/input6" > "./outputs/output_input6-np_36.txt" 2>&1
+Elapsed Time: 3186 milliseconds
+############################################################
+
+                       FILE './inputs/input600'                         
+
+############################################################
+mpirun --hostfile hostfile -n 1 "./a.out" < "./inputs/input600" > "./outputs/output_input600-np_1.txt" 2>&1
+Elapsed Time: 11185 milliseconds
+mpirun --hostfile hostfile -n 4 "./a.out" < "./inputs/input600" > "./outputs/output_input600-np_4.txt" 2>&1
+Elapsed Time: 4079 milliseconds
+mpirun --hostfile hostfile -n 9 "./a.out" < "./inputs/input600" > "./outputs/output_input600-np_9.txt" 2>&1
+Elapsed Time: 3727 milliseconds
+mpirun --hostfile hostfile -n 16 "./a.out" < "./inputs/input600" > "./outputs/output_input600-np_16.txt" 2>&1
+Elapsed Time: 4690 milliseconds
+mpirun --hostfile hostfile -n 25 "./a.out" < "./inputs/input600" > "./outputs/output_input600-np_25.txt" 2>&1
+Elapsed Time: 5405 milliseconds
+mpirun --hostfile hostfile -n 36 "./a.out" < "./inputs/input600" > "./outputs/output_input600-np_36.txt" 2>&1
+Elapsed Time: 6413 milliseconds
+############################################################
+
+                       FILE './inputs/input900'                         
+
+############################################################
+mpirun --hostfile hostfile -n 1 "./a.out" < "./inputs/input900" > "./outputs/output_input900-np_1.txt" 2>&1
+Elapsed Time: 33536 milliseconds
+mpirun --hostfile hostfile -n 4 "./a.out" < "./inputs/input900" > "./outputs/output_input900-np_4.txt" 2>&1
+Elapsed Time: 10985 milliseconds
+mpirun --hostfile hostfile -n 9 "./a.out" < "./inputs/input900" > "./outputs/output_input900-np_9.txt" 2>&1
+Elapsed Time: 8600 milliseconds
+mpirun --hostfile hostfile -n 16 "./a.out" < "./inputs/input900" > "./outputs/output_input900-np_16.txt" 2>&1
+Elapsed Time: 9632 milliseconds
+mpirun --hostfile hostfile -n 25 "./a.out" < "./inputs/input900" > "./outputs/output_input900-np_25.txt" 2>&1
+Elapsed Time: 9770 milliseconds
+mpirun --hostfile hostfile -n 36 "./a.out" < "./inputs/input900" > "./outputs/output_input900-np_36.txt" 2>&1
+Elapsed Time: 10661 milliseconds
