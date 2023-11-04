@@ -46,7 +46,7 @@ void read_matrix(int dim, int* Matrix) {
         for (int j=0; j<dim; ++j) {
             scanf("%d", &Matrix[i*dim + j]);
             // Replacing 0's with "INF" in order to calculate correctly the "Min-Plus"
-            if (Matrix[i*dim + j] == 0 & i!=j) {Matrix[i*dim + j] = INF;}
+            if ((Matrix[i*dim + j] == 0) & (i!=j)) {Matrix[i*dim + j] = INF;}
         }
     }
     if (VERBOSE) {printf("Finished reading input\n");}
@@ -199,7 +199,7 @@ int main(int argc, char **argv) {
     
 
     // Only print Execution time if requested
-    if (print_execution_time & rank==0) {
+    if (print_execution_time & (rank==0)) {
         printf("Execution time: %.5lf\n", MPI_Wtime() - start);
     }
 
